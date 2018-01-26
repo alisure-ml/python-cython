@@ -2,6 +2,12 @@
 
 
 ### Windows 安装
+> Windows A popular option is to use the open source MinGW (a Windows distribution of gcc). 
+See the appendix for instructions for setting up MinGW manually. 
+Enthought Canopy and Python(x,y) bundle MinGW, but some of the configuration steps 
+in the appendix might still be necessary. Another option is to use Microsoft’s Visual C.
+ One must then use the same version which the installed Python was compiled with.
+
 1. 下载 [Cython‑0.27.3‑cp35‑cp35m‑win_amd64.whl](https://www.lfd.uci.edu/~gohlke/pythonlibs/#cython)
 
 2. 安装 `pip install Cython‑0.27.3‑cp35‑cp35m‑win_amd64.whl`
@@ -22,9 +28,12 @@
 
 
 ### Ubuntn 安装
+> Linux The GNU C Compiler (gcc) is usually present, or easily available through the package system. 
+On Ubuntu or Debian, for instance, the command sudo apt-get install build-essential will fetch everything you need.
+
 1. 安装 `pip install Cython`
 
-2. ...
+2. 或者从官网下载后 `python setup.py install`
 
 
 ### 初级Demo
@@ -112,15 +121,113 @@
         ```
 
 
-### 编译入门
-1. python3 setup.py build
-    * 编译(过程中会生成.so文件，直接把该文件拷贝出来使用就行)
-    * 为了使用方便，运行脚本直接和so文件放在一个目录下，使用import导入即可。
+### 编译Cython代码
+* Cython代码必须被编译，有两个阶段
+    1. `.pyx`文件被`Cython`编译成`.c`文件。
+    2. `.c`文件被`C compiler`编译成Linux的`.so`文件或Windows的`.pyd`文件，
+    该文件可以被`Python`直接`import`导入。
+
+* 编译Cython代码的几种方式
+    1. 写一个`distutils` `setup.py`文件，这也是正常的和推荐的方式。
+        1. 编写`hello.pyx`
+        ```
+        def say_hello_to(name):
+            print("Hello %s!" % name)
+        ```
+        2. 编写相应的`setup.py`脚本
+        ```
+        from distutils.core import setup
+        from Cython.Build import cythonize
+        
+        setup(
+          name = 'Hello world app',
+          ext_modules = cythonize("hello.pyx"),
+        )
+        ```
+        3. 执行编译
+        ```
+        python3 setup.py build_ext --inplace
+        ```
+        
+            其他说明：
+            1. python3 setup.py build
+                * 编译(过程中会生成.so文件，直接把该文件拷贝出来使用就行)
+                * 为了使用方便，运行脚本直接和so文件放在一个目录下，使用import导入即可。
+                
+            2. python3 setup.py install
+                * 安装(执行install后会把模块复制到python系统目录下)
+                
+        4. 使用
+        ```
+        from hello import say_hello_to
+        say_hello_to("ALISURE")
+        ```
+        
+    2. 使用`pyximport`，像导入`.py`一样导入`.pyx`(using distutils to compile and build in the background)
+    3. 使用`cython`命令行工具手动从`.pyx`产生`.c`文件，然后手动编译`.c`文件产生能够直接被`pyhton`导入的文件。
     
-2. python3 setup.py install
-    * 安装(执行install后会把模块复制到python系统目录下)
+
+### 如何优化
+* 静态类型(static typing)：使用 `cdef`关键字
+    * 示例代码在`types_cython`中
+    * For performance critical code, it is often helpful to add static type declarations, 
+    as they will allow Cython to step out of the dynamic nature of 
+    the Python code and generate simpler and faster C code.
+    * 类型声明导致源代码更加冗余、降低了可读性，只建议`使用在能提升性能的关键地方`。
+    * 所有的C类型都可以声明，包括int/floating point/complex numbers/structs/unions/pointer
+    * 例子：
+        * 纯Python代码(run `types_demo.py` time is 0.657677s)
+        ```
+        def f(x):
+            return x**2-x
+        
+        def integrate_f(a, b, N):
+            s = 0
+            dx = (b-a)/N
+            for i in range(N):
+                s += f(a+i*dx)
+            return s * dx
+        ```
+        * 简单地使用Cython编译(run `types_demo.py` time is 0.555587s)
+        
+        * 增加类型声明(run `types_demo.py` time is 0.086425s)
+        ```
+        def f(double x):
+            return x**2-x
+        
+        def integrate_f(double a, double b, int N):
+            cdef int i
+            cdef double s, dx
+            s = 0
+            dx = (b-a)/N
+            for i in range(N):
+                s += f(a+i*dx)
+            return s * dx
+        ```
+        
+* 函数类型(Typing Functions)
+    * Python中的函数调用非常耗费时间。
+    * `except ? *`
+        * except-modifier
+    * `cpdef`
+        * Python wrapper
+        * overridden
+    * 副作用
+        * 函数名称不能使用Python-space。
+        * 不能在运行时改变函数的内容。
+    * 例子：
+        * Typing Functions(run `types_demo.py` time is 0.051151s)
+        ```
+        cdef double f(double x):
+            return x**2-x
+        ```
+
+* [Determining where to add types](http://docs.cython.org/en/latest/src/quickstart/cythonize.html#determining-where-to-add-types)
 
 
+
+### 教程
+* [cython](http://cython.org/)
 
 
 ### 说明
