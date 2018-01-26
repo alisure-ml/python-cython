@@ -1,4 +1,7 @@
-from demo_compute import compute
+import compute as compute
+# import compute_cython as compute
+# import compute_cython2 as compute
+# import compute_cython3 as compute
 import time
 
 
@@ -13,3 +16,22 @@ for i in range(1000000):
     compute.spherical_distance(lon1, lat1, lon2, lat2)
 end_time = time.clock()
 print("run 2 time: %f s" % (end_time - start_time))
+
+
+"""
+1. 
+run 1 time: 0.651578 s
+run 2 time: 1.620753 s
+
+2.
+run 1 time: 0.573591 s
+run 2 time: 1.538987 s
+
+3.
+run 1 time: 0.002526 s
+run 2 time: 1.525995 s
+
+4.
+run 1 time: 0.002509 s
+run 2 time: 0.382405 s
+"""
