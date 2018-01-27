@@ -28,7 +28,8 @@ in the appendix might still be necessary. Another option is to use Microsoft’s
 
 * 说明
     * 在VS2015中没有发现vcvarsall.bat，所以python3.5+VS没有成功。。。。
-    * 更换成了pyhton2.7后，执行下面命令，生成了`.pyd`文件。
+    * 解决办法：更换成pyhton2.7，采用[MinGW](http://docs.cython.org/en/latest/src/tutorial/appendix.html)的方式安装编译环境后，
+    执行下面命令，生成了`.pyd`文件。
     ```
     pip2 install Cython
     python2 setup.py build_ext --inplace
