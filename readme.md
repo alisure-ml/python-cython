@@ -128,6 +128,7 @@ On Ubuntu or Debian, for instance, the command sudo apt-get install build-essent
     该文件可以被`Python`直接`import`导入。
 
 * 编译Cython代码的几种方式
+
     1. 写一个`distutils` `setup.py`文件，这也是正常的和推荐的方式。
         1. 编写`hello.pyx`
         ```
@@ -164,7 +165,26 @@ On Ubuntu or Debian, for instance, the command sudo apt-get install build-essent
         ```
         
     2. 使用`pyximport`，像导入`.py`一样导入`.pyx`(using distutils to compile and build in the background)
+        * 在`pyximport_cython`文件夹中
+        
     3. 使用`cython`命令行工具手动从`.pyx`产生`.c`文件，然后手动编译`.c`文件产生能够直接被`pyhton`导入的文件。
+        以`pyximport_cython`中的`primes.pyx`为例
+        * 命令行下执行命令：
+        ```
+        cd pyximport_cyhton
+        cython primes.pyx
+        gcc -c -fPIC -I /usr/include/python3.5 primes.c
+        gcc -shared primes.o -o primes.so
+        ```
+        * 使用
+        ```
+        import primes
+        print(primes.primes(1000))
+        ```
+    
+    4. reference
+        * [cython: source_files_and_compilation](http://docs.cython.org/en/latest/src/userguide/source_files_and_compilation.html#compilation)   
+
     
 
 ### 如何优化
@@ -222,8 +242,116 @@ On Ubuntu or Debian, for instance, the command sudo apt-get install build-essent
             return x**2-x
         ```
 
-* [Determining where to add types](http://docs.cython.org/en/latest/src/quickstart/cythonize.html#determining-where-to-add-types)
+> [Determining where to add types](http://docs.cython.org/en/latest/src/quickstart/cythonize.html#determining-where-to-add-types)
 
+* Calling C functions
+    * Cython给出了调用原生C库函数的快捷方式，所有能快捷调用的方法在 
+    [Cyhton/Includes](https://github.com/cython/cython/tree/master/Cython/Includes) 中
+        ```
+        from libc.stdlib cimport atoi
+
+        cdef parse_charptr_to_py_int(char* s):
+            assert s is not NULL, "byte string value is NULL"
+            return atoi(s)   # note: atoi() has no error detection!
+        ```
+        ```
+        from libc.math cimport sin
+
+        cdef double f(double x):
+            return sin(x*x)
+        ```
+        
+    * 外部声明（External declarations）
+        ```
+        cdef extern from "math.h":
+            double sin(double x)
+        ```
+    * 命名参数（Naming parameters）
+        * 签名声明(不能使用keyword arguments)
+        ```
+        cdef extern from "string.h":
+            char* strstr(const char*, const char*)
+        ```
+        * 参数有名称
+        ```
+        cdef extern from "string.h":
+            char* strstr(const char *haystack, const char *needle)
+        ```
+        * 可以使用关键字参数调用
+        ```
+        cdef char* data = "hfvcakdfagbcffvschvxcdfgccbcfhvgcsnfxjh"
+
+        pos = strstr(needle='akd', haystack=data)
+        print pos != NULL
+        ```
+
+* Using C libraries(使用C库)
+    > 示例代码在`c_library_cython`中，
+    参考：[Using C libraries](http://docs.cython.org/en/latest/src/tutorial/clibraries.html#id1)
+    
+    1. 下载[CAlg](http://fragglet.github.io/c-algorithms/) / 
+    [CAlg](https://github.com/fragglet/c-algorithms/releases)
+    
+    2. 安装CAlg(`INSTALL`文件中有安装说明)
+        * 目的是安装 `libcalg/queue.h` 文件
+        * 默认安装成功后会在`/usr/local/lib`下出现`libcalg.so`，
+        在`/usr/local/include`下出现`libcalg-1.0`。
+        * `sudo make check` 是可选的
+        * `make clean` 只清除二进制和对象文件(binaries and object files)
+        * `make distclean` 也清除 `sudo ./configure` 中创建的文件
+        * `make install` 默认安装到`/usr/local/bin`,`/usr/local/man`等位置，
+        可以指定安装地址`make install --prefix=PATH`
+        * 其他问题详见`INSTALL`文件
+        
+        ```
+        cd c-algorithms-1.2.0
+        sudo ./configure
+        sudo make
+        sudo make check
+        sudo make install
+        make clean
+        make distclean
+        ```
+    
+    3. 在`.pxd`文件中重定义C API接口，在`c_library_cython/cqueue.pxd`中
+    
+    4. 在`.pyx`文件中编写包装类，在`c_library_cython/queue.pyx`中
+    
+    5. 在`setup.py`文件中编写setup文件
+        ```
+        ext_modules = cythonize([
+            Extension("queue", ["queue.pyx"], libraries=["calg"])
+            ])
+        ```
+    
+    6. 编译
+        ```
+        CFLAGS="-I/usr/local/include/libcalg-1.0" LDFLAGS="-L/usr/local/lib" python3 setup.py build_ext -i
+        ```
+    
+    7. 调用
+        ```
+        from c_library_cython.queue import Queue
+        q = Queue()
+        q.append(5)
+        print(q.peek())
+        print(q.pop())
+        ```
+    
+    8. 遇到的错误
+        * 编译阶段要注意pyhton的版本，我的需要使用python3
+        * `ImportError: libcalg.so.0: cannot open shared object file: No such file or directory`
+            * 环境变量中配置：LD_LIBRARY_PATH=/usr/local/lib
+    
+    9. OVER
+
+
+### Pure Python Mode
+* [Pure Python Mode](http://docs.cython.org/en/latest/src/tutorial/pure.html)
+
+
+### Working with NumPy
+* [Working with NumPy](http://docs.cython.org/en/latest/src/tutorial/numpy.html)
 
 
 ### 教程
@@ -234,5 +362,4 @@ On Ubuntu or Debian, for instance, the command sudo apt-get install build-essent
 1. 在数字、浮点数等计算中Cython可以极大的提高性能，而这方面多线程几乎不能提高任何性能，有时候反而会降低。
 2. 对于IO密集型应用，优化可以考虑使用多线程或者多进程方式，
 对于计算密集型的场合，遇到瓶颈时可以考虑使用Cython或者封装C相关的模块。
-
 
