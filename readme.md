@@ -26,6 +26,14 @@ in the appendix might still be necessary. Another option is to use Microsoft’s
 5. 配置环境变量
 添加 `VS90COMNTOOLS=%VS140COMNTOOLS%` 即可
 
+* 说明
+    * 在VS2015中没有发现vcvarsall.bat，所以python3.5+VS没有成功。。。。
+    * 更换成了pyhton2.7后，执行下面命令，生成了`.pyd`文件。
+    ```
+    pip2 install Cython
+    python2 setup.py build_ext --inplace
+    ```
+    
 
 ### Ubuntn 安装
 > Linux The GNU C Compiler (gcc) is usually present, or easily available through the package system. 

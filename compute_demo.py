@@ -23,15 +23,31 @@ print("run 2 time: %f s" % (end_time - start_time))
 run 1 time: 0.651578 s
 run 2 time: 1.620753 s
 
+run 1 time: 0.286562 s
+run 2 time: 1.247603 s
+
+
 2.
 run 1 time: 0.573591 s
 run 2 time: 1.538987 s
+
+run 1 time: 0.234744 s
+run 2 time: 0.937928 s
+
 
 3.
 run 1 time: 0.002526 s
 run 2 time: 1.525995 s
 
+run 1 time: 0.001535 s
+run 2 time: 0.871575 s
+
+
 4.
 run 1 time: 0.002509 s
 run 2 time: 0.382405 s
+
+run 1 time: 0.001375 s
+run 2 time: 0.421578 s
+
 """
